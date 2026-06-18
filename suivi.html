@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon suivi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..700&family=Quicksand:wght@400;500;600;700&display=swap');
+
+  :root{
+    --sable: #F6F1E7;
+    --sable-fonce: #EDE4D3;
+    --ardoise: #2F3E46;
+    --ardoise-claire: #52677A;
+    --bleu-lagon: #6FA8AC;
+    --bleu-lagon-clair: #BFE0E1;
+    --corail: #E8987A;
+    --corail-clair: #F4C9B6;
+    --algue: #84A98C;
+    --blanc: #FFFCF7;
+    --ombre: rgba(47,62,70,0.10);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: var(--sable);
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(111,168,172,0.08), transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(232,152,122,0.10), transparent 40%);
+    font-family:'Quicksand', sans-serif;
+    color: var(--ardoise);
+    min-height:100vh;
+    padding: 28px 16px 60px;
+  }
+
+  .wrap{ max-width: 880px; margin: 0 auto; }
+
+  header{ text-align:center; margin-bottom: 28px; position:relative; }
+  header h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: clamp(28px, 5vw, 42px);
+    margin:0 0 6px;
+    color: var(--ardoise);
+    letter-spacing: -0.5px;
+  }
+  header p{ margin:0; color: var(--ardoise-claire); font-size:15px; }
+
+  .vague{
+    width:100%; height:24px; margin-top:14px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 24'%3E%3Cpath d='M0 12 C 50 0, 100 24, 150 12 S 250 0, 300 12 S 400 24, 450 12 S 550 0, 600 12' fill='none' stroke='%236FA8AC' stroke-width='2' opacity='0.5'/%3E%3C/svg%3E") repeat-x;
+    background-size: 200px 24px;
+  }
+
+  .carte{
+    background: var(--blanc);
+    border-radius: 22px;
+    box-shadow: 0 6px 24px var(--ombre);
+    padding: 22px 22px 26px;
+    margin-bottom: 22px;
+  }
+
+  .carte h2{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size: 21px;
+    margin: 0 0 16px;
+    display:flex; align-items:center; gap:8px;
+  }
+
+  /* --- Formulaire de saisie --- */
+  .form-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .champ{ display:flex; flex-direction:column; gap:6px; }
+  .champ label{
+    font-size: 12.5px;
+    font-weight:600;
+    color: var(--ardoise-claire);
+  }
+  .champ .unite{ font-weight: 400; opacity:0.7; font-size: 11px; }
+  .champ input{
+    border: 1.5px solid var(--sable-fonce);
+    background: var(--sable);
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-family:'Quicksand', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ardoise);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .champ input:focus{
+    outline:none;
+    border-color: var(--bleu-lagon);
+    background: var(--blanc);
+  }
+  .champ.date input{ font-weight:600; }
+
+  .form-actions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+  button{
+    font-family:'Quicksand', sans-serif;
+    font-weight:700;
+    font-size: 14.5px;
+    border:none;
+    border-radius: 999px;
+    padding: 11px 22px;
+    cursor:pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  button:active{ transform: scale(0.97); }
+
+  .btn-principal{
+    background: var(--bleu-lagon);
+    color: var(--blanc);
+    box-shadow: 0 4px 14px rgba(111,168,172,0.4);
+  }
+  .btn-principal:hover{ background:#5f9498; }
+
+  .btn-secondaire{
+    background: transparent;
+    color: var(--ardoise-claire);
+    border: 1.5px solid var(--sable-fonce);
+  }
+  .btn-secondaire:hover{ background: var(--sable); }
+
+  .message{
+    font-size: 13.5px;
+    color: var(--algue);
+    font-weight:600;
+    margin-left: 4px;
+    opacity:0;
+    transition: opacity 0.3s;
+  }
+  .message.visible{ opacity:1; }
+
+  /* --- Cartes de synthèse (depuis le premier jour) --- */
+  .synth-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+  .synth-item{
+    background: var(--sable);
+    border-radius: 16px;
+    padding: 14px 16px;
+    position:relative;
+    overflow:hidden;
+  }
+  .synth-item::after{
+    content:"";
+    position:absolute; right:-10px; bottom:-14px;
+    width:70px; height:70px;
+    background: radial-gradient(circle, var(--bleu-lagon-clair) 0%, transparent 70%);
+    opacity:0.6;
+  }
+  .synth-item .nom{ font-size:12.5px; font-weight:700; color:var(--ardoise-claire); margin-bottom:4px;}
+  .synth-item .valeurs{ display:flex; align-items:baseline; gap:8px; }
+  .synth-item .actuel{ font-family:'Fraunces', serif; font-size: 24px; font-weight:600; }
+  .synth-item .delta{ font-size: 13px; font-weight:700; padding: 2px 8px; border-radius:999px; }
+  .delta.baisse{ background: rgba(132,169,140,0.25); color:#3f6b49; }
+  .delta.hausse{ background: rgba(232,152,122,0.3); color:#a8552f; }
+  .delta.stable{ background: rgba(111,168,172,0.2); color: var(--ardoise-claire); }
+  .synth-item .depuis{ font-size: 11px; color: var(--ardoise-claire); opacity:0.75; margin-top:4px;}
+
+  /* --- Graphiques --- */
+  .graph-tabs{
+    display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px;
+  }
+  .tab{
+    background: var(--sable);
+    border:none;
+    border-radius: 999px;
+    padding: 8px 16px;
+    font-family:'Quicksand', sans-serif;
+    font-weight:600;
+    font-size: 13.5px;
+    color: var(--ardoise-claire);
+    cursor:pointer;
+  }
+  .tab.actif{
+    background: var(--ardoise);
+    color: var(--blanc);
+  }
+  .graph-zone{ position:relative; height: 280px; }
+
+  /* --- Tableau historique --- */
+  .table-scroll{ overflow-x:auto; }
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:600px;}
+  thead th{
+    text-align:left;
+    font-weight:700;
+    color: var(--ardoise-claire);
+    padding: 8px 10px;
+    border-bottom: 2px solid var(--sable-fonce);
+    white-space:nowrap;
+  }
+  tbody td{
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--sable);
+    white-space:nowrap;
+  }
+  tbody tr:hover{ background: var(--sable); }
+  tbody td.actions{ text-align:right; }
+  .btn-suppr{
+    background:none; border:none; cursor:pointer;
+    color: var(--corail); font-size:13px; font-weight:700;
+    padding: 4px 8px;
+  }
+  .vide{
+    text-align:center;
+    color: var(--ardoise-claire);
+    padding: 30px 10px;
+    font-style: normal;
+  }
+
+  footer{
+    text-align:center;
+    font-size: 12px;
+    color: var(--ardoise-claire);
+    opacity:0.6;
+    margin-top: 30px;
+  }
+
+  @media (max-width: 480px){
+    .carte{ padding: 16px; border-radius:18px;}
+    .form-grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Mon suivi</h1>
+    <p>Poids &amp; mensurations, jour après jour</p>
+    <div class="vague"></div>
+  </header>
+
+  <!-- SAISIE -->
+  <section class="carte">
+    <h2>📝 Aujourd'hui</h2>
+    <div class="form-grid">
+      <div class="champ date">
+        <label for="f-date">Date</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="champ">
+        <label for="f-poids">Poids <span class="unite">(kg)</span></label>
+        <input type="number" step="0.1" id="f-poids" placeholder="—">
+      </div>
+      <div class="champ">
+        <label for="f-poitrine">Poitrine <span class="unite">(cm)</span></label>
+        <input type="number" step="0.1" id="f-poitrine" placeholder="—">
+      </div>
+      <div class="champ">
+        <label for="f-taille">Taille <span class="unite">(cm)</span></label>
+        <input type="number" step="0.1" id="f-taille" placeholder="—">
+      </div>
+      <div class="champ">
+        <label for="f-hanche">Hanches <span class="unite">(cm)</span></label>
+        <input type="number" step="0.1" id="f-hanche" placeholder="—">
+      </div>
+      <div class="champ">
+        <label for="f-bras">Bras <span class="unite">(cm)</span></label>
+        <input type="number" step="0.1" id="f-bras" placeholder="—">
+      </div>
+      <div class="champ">
+        <label for="f-cuisse">Cuisse <span class="unite">(cm)</span></label>
+        <input type="number" step="0.1" id="f-cuisse" placeholder="—">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-principal" id="btn-enregistrer">Enregistrer</button>
+      <button class="btn-secondaire" id="btn-effacer-form">Vider les champs</button>
+      <span class="message" id="msg-confirmation">Mesure enregistrée ✓</span>
+    </div>
+  </section>
+
+  <!-- SYNTHESE -->
+  <section class="carte">
+    <h2>📊 Depuis le premier jour</h2>
+    <div class="synth-grid" id="synth-grid">
+      <!-- rempli en JS -->
+    </div>
+  </section>
+
+  <!-- GRAPHIQUES -->
+  <section class="carte">
+    <h2>📈 Évolution</h2>
+    <div class="graph-tabs" id="graph-tabs"></div>
+    <div class="graph-zone">
+      <canvas id="graph-canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- HISTORIQUE -->
+  <section class="carte">
+    <h2>🗒️ Historique</h2>
+    <div class="table-scroll">
+      <table id="table-historique">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Poids</th>
+            <th>Poitrine</th>
+            <th>Taille</th>
+            <th>Hanches</th>
+            <th>Bras</th>
+            <th>Cuisse</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>Tes données restent enregistrées d'une visite à l'autre, sur cet appareil.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+
+  const INDICATEURS = [
+    { id:'poids',     label:'Poids',     unite:'kg', couleur:'#2F3E46' },
+    { id:'poitrine',  label:'Poitrine',  unite:'cm', couleur:'#6FA8AC' },
+    { id:'taille',    label:'Taille',    unite:'cm', couleur:'#E8987A' },
+    { id:'hanche',    label:'Hanches',   unite:'cm', couleur:'#84A98C' },
+    { id:'bras',      label:'Bras',      unite:'cm', couleur:'#B08968' },
+    { id:'cuisse',    label:'Cuisse',    unite:'cm', couleur:'#9A7AA0' },
+  ];
+
+  let donnees = [];     // tableau d'objets {date, poids, poitrine, taille, hanche, bras, cuisse}
+  let ongletActif = 'poids';
+  let chart = null;
+
+  // ---------- Persistance ----------
+  async function charger(){
+    try{
+      const res = await window.storage.get('mesures', false);
+      if(res && res.value){
+        donnees = JSON.parse(res.value);
+      }
+    }catch(e){
+      donnees = [];
+    }
+  }
+
+  async function sauvegarder(){
+    try{
+      await window.storage.set('mesures', JSON.stringify(donnees), false);
+    }catch(e){
+      console.error('Erreur de sauvegarde', e);
+    }
+  }
+
+  // ---------- Utils ----------
+  function formatDateAffichage(iso){
+    const [a,m,j] = iso.split('-');
+    return `${j}/${m}/${a}`;
+  }
+
+  function trier(){
+    donnees.sort((a,b) => a.date.localeCompare(b.date));
+  }
+
+  function dernierJourAujourdhui(){
+    const d = new Date();
+    const annee = d.getFullYear();
+    const mois = String(d.getMonth()+1).padStart(2,'0');
+    const jour = String(d.getDate()).padStart(2,'0');
+    return `${annee}-${mois}-${jour}`;
+  }
+
+  // ---------- Rendu : formulaire ----------
+  function initFormulaire(){
+    document.getElementById('f-date').value = dernierJourAujourdhui();
+  }
+
+  // ---------- Rendu : synthèse ----------
+  function rendreSynthese(){
+    const grid = document.getElementById('synth-grid');
+    grid.innerHTML = '';
+
+    if(donnees.length === 0){
+      grid.innerHTML = '<p class="vide" style="grid-column:1/-1;">Ajoute ta première mesure pour voir ton évolution ici 🌊</p>';
+      return;
+    }
+
+    const premier = donnees[0];
+    const dernier = donnees[donnees.length - 1];
+
+    INDICATEURS.forEach(ind => {
+      const valDep = premier[ind.id];
+      const valAct = dernier[ind.id];
+
+      const item = document.createElement('div');
+      item.className = 'synth-item';
+
+      let contenuDelta = '';
+      let valeurActuelleTxt = '—';
+
+      if(valAct !== undefined && valAct !== null && valAct !== ''){
+        valeurActuelleTxt = `${valAct}<span style="font-size:13px;font-weight:600;"> ${ind.unite}</span>`;
+      }
+
+      if(valDep !== undefined && valDep !== null && valDep !== '' &&
+         valAct !== undefined && valAct !== null && valAct !== ''){
+        const delta = Math.round((valAct - valDep) * 10) / 10;
+        let classe = 'stable';
+        let signe = '';
+        if(delta < 0){ classe = 'baisse'; signe = ''; }
+        else if(delta > 0){ classe = 'hausse'; signe = '+'; }
+        contenuDelta = `<span class="delta ${classe}">${signe}${delta} ${ind.unite}</span>`;
+      }
+
+      item.innerHTML = `
+        <div class="nom">${ind.label}</div>
+        <div class="valeurs">
+          <span class="actuel">${valeurActuelleTxt}</span>
+          ${contenuDelta}
+        </div>
+        <div class="depuis">depuis le ${formatDateAffichage(premier.date)}</div>
+      `;
+      grid.appendChild(item);
+    });
+  }
+
+  // ---------- Rendu : onglets de graphique ----------
+  function rendreOnglets(){
+    const tabs = document.getElementById('graph-tabs');
+    tabs.innerHTML = '';
+    INDICATEURS.forEach(ind => {
+      const btn = document.createElement('button');
+      btn.className = 'tab' + (ind.id === ongletActif ? ' actif' : '');
+      btn.textContent = ind.label;
+      btn.addEventListener('click', () => {
+        ongletActif = ind.id;
+        rendreOnglets();
+        rendreGraphique();
+      });
+      tabs.appendChild(btn);
+    });
+  }
+
+  // ---------- Rendu : graphique ----------
+  function rendreGraphique(){
+    const ctx = document.getElementById('graph-canvas');
+    const ind = INDICATEURS.find(i => i.id === ongletActif);
+
+    const points = donnees
+      .filter(d => d[ind.id] !== undefined && d[ind.id] !== null && d[ind.id] !== '')
+      .map(d => ({ x: d.date, y: Number(d[ind.id]) }));
+
+    if(chart){ chart.destroy(); }
+
+    if(points.length === 0){
+      chart = null;
+      ctx.getContext('2d').clearRect(0,0,ctx.width,ctx.height);
+      return;
+    }
+
+    chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: `${ind.label} (${ind.unite})`,
+          data: points,
+          borderColor: ind.couleur,
+          backgroundColor: ind.couleur + '22',
+          pointBackgroundColor: ind.couleur,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.35,
+          fill: true,
+          borderWidth: 2.5,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#2F3E46',
+            titleFont: { family: 'Quicksand' },
+            bodyFont: { family: 'Quicksand' },
+            callbacks: {
+              title: (items) => formatDateAffichage(items[0].label),
+              label: (item) => `${item.formattedValue} ${ind.unite}`
+            }
+          }
+        },
+        scales: {
+          x: {
+            type: 'time',
+            time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy', displayFormats: { day: 'dd/MM' } },
+            grid: { display: false },
+            ticks: { font: { family: 'Quicksand' }, color: '#52677A' }
+          },
+          y: {
+            grid: { color: '#EDE4D3' },
+            ticks: { font: { family: 'Quicksand' }, color: '#52677A' }
+          }
+        }
+      }
+    });
+  }
+
+  // ---------- Rendu : tableau historique ----------
+  function rendreTableau(){
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+
+    if(donnees.length === 0){
+      tbody.innerHTML = '<tr><td colspan="8" class="vide">Aucune mesure pour le moment.</td></tr>';
+      return;
+    }
+
+    // affichage du plus récent au plus ancien
+    const triParDateDesc = [...donnees].sort((a,b) => b.date.localeCompare(a.date));
+
+    triParDateDesc.forEach(d => {
+      const tr = document.createElement('tr');
+      const cellule = (val) => val !== undefined && val !== null && val !== '' ? val : '—';
+      tr.innerHTML = `
+        <td><strong>${formatDateAffichage(d.date)}</strong></td>
+        <td>${cellule(d.poids)}</td>
+        <td>${cellule(d.poitrine)}</td>
+        <td>${cellule(d.taille)}</td>
+        <td>${cellule(d.hanche)}</td>
+        <td>${cellule(d.bras)}</td>
+        <td>${cellule(d.cuisse)}</td>
+        <td class="actions"><button class="btn-suppr" data-date="${d.date}">Supprimer</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('.btn-suppr').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const date = btn.getAttribute('data-date');
+        donnees = donnees.filter(d => d.date !== date);
+        await sauvegarder();
+        toutRendre();
+      });
+    });
+  }
+
+  function toutRendre(){
+    trier();
+    rendreSynthese();
+    rendreOnglets();
+    rendreGraphique();
+    rendreTableau();
+  }
+
+  // ---------- Enregistrement ----------
+  async function enregistrerMesure(){
+    const date = document.getElementById('f-date').value;
+    if(!date){
+      alert('Choisis une date avant d\'enregistrer.');
+      return;
+    }
+
+    const valeurs = {};
+    INDICATEURS.forEach(ind => {
+      const v = document.getElementById('f-' + ind.id).value;
+      valeurs[ind.id] = v === '' ? '' : Number(v);
+    });
+
+    const existant = donnees.find(d => d.date === date);
+    if(existant){
+      Object.assign(existant, valeurs);
+    } else {
+      donnees.push({ date, ...valeurs });
+    }
+
+    await sauvegarder();
+    toutRendre();
+
+    const msg = document.getElementById('msg-confirmation');
+    msg.classList.add('visible');
+    setTimeout(() => msg.classList.remove('visible'), 2000);
+  }
+
+  function viderFormulaire(){
+    INDICATEURS.forEach(ind => {
+      document.getElementById('f-' + ind.id).value = '';
+    });
+  }
+
+  // ---------- Initialisation ----------
+  async function init(){
+    initFormulaire();
+    await charger();
+    toutRendre();
+
+    document.getElementById('btn-enregistrer').addEventListener('click', enregistrerMesure);
+    document.getElementById('btn-effacer-form').addEventListener('click', viderFormulaire);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
