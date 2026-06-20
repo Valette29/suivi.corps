@@ -344,9 +344,9 @@
   // ---------- Persistance ----------
   async function charger(){
     try{
-      const res = await window.storage.get('mesures', false);
-      if(res && res.value){
-        donnees = JSON.parse(res.value);
+      const brut = localStorage.getItem('mesures');
+      if(brut){
+        donnees = JSON.parse(brut);
       }
     }catch(e){
       donnees = [];
@@ -355,7 +355,7 @@
 
   async function sauvegarder(){
     try{
-      await window.storage.set('mesures', JSON.stringify(donnees), false);
+      localStorage.setItem('mesures', JSON.stringify(donnees));
     }catch(e){
       console.error('Erreur de sauvegarde', e);
     }
