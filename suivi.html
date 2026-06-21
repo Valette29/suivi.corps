@@ -325,7 +325,6 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script>
 (function(){
 
@@ -456,14 +455,15 @@
     const ctx = document.getElementById('graph-canvas');
     const ind = INDICATEURS.find(i => i.id === ongletActif);
 
-    const points = donnees
-      .filter(d => d[ind.id] !== undefined && d[ind.id] !== null && d[ind.id] !== '')
-      .map(d => ({ x: d.date, y: Number(d[ind.id]) }));
+    const lignes = donnees
+      .filter(d => d[ind.id] !== undefined && d[ind.id] !== null && d[ind.id] !== '');
 
-    if(chart){ chart.destroy(); }
+    const labels = lignes.map(d => formatDateAffichage(d.date));
+    const valeurs = lignes.map(d => Number(d[ind.id]));
 
-    if(points.length === 0){
-      chart = null;
+    if(chart){ chart.destroy(); chart = null; }
+
+    if(valeurs.length === 0){
       ctx.getContext('2d').clearRect(0,0,ctx.width,ctx.height);
       return;
     }
@@ -471,9 +471,10 @@
     chart = new Chart(ctx, {
       type: 'line',
       data: {
+        labels: labels,
         datasets: [{
           label: `${ind.label} (${ind.unite})`,
-          data: points,
+          data: valeurs,
           borderColor: ind.couleur,
           backgroundColor: ind.couleur + '22',
           pointBackgroundColor: ind.couleur,
@@ -494,15 +495,12 @@
             titleFont: { family: 'Quicksand' },
             bodyFont: { family: 'Quicksand' },
             callbacks: {
-              title: (items) => formatDateAffichage(items[0].label),
               label: (item) => `${item.formattedValue} ${ind.unite}`
             }
           }
         },
         scales: {
           x: {
-            type: 'time',
-            time: { unit: 'day', tooltipFormat: 'dd/MM/yyyy', displayFormats: { day: 'dd/MM' } },
             grid: { display: false },
             ticks: { font: { family: 'Quicksand' }, color: '#52677A' }
           },
